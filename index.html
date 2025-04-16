@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Win Go Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .balance {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .wallet-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .withdraw {
+            color: #333;
+        }
+        
+        .deposit {
+            color: #4CAF50;
+        }
+        
+        .notice {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .game-types {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .game-type {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .divider {
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        
+        .how-to-play {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .time-remaining {
+            margin-bottom: 10px;
+        }
+        
+        .timer {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .timer-digit {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            margin: 0 2px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .game-id {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .color-options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .color-option {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .green {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .violet {
+            background-color: #9C27B0;
+            color: white;
+        }
+        
+        .red {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        .random {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .multipliers {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        
+        .multiplier {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px;
+            text-align: center;
+            cursor: pointer;
+            flex: 1;
+            min-width: 50px;
+        }
+        
+        .multiplier:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="balance"># 0.00</div>
+    <div class="wallet-actions">
+        <button class="action-btn withdraw">Withdraw</button>
+        <button class="action-btn deposit">Deposit</button>
+    </div>
+    <div class="notice">Please Fill In The Correct Bank Card Information. The Platform Will Process Withdr</div>
+    
+    <div class="game-types">
+        <div class="game-type">Win Go 30s</div>
+        <div class="game-type">Win Go 1Min</div>
+        <div class="game-type">Win Go 3Min</div>
+        <div class="game-type">Win Go 5Min</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="how-to-play">How to play</div>
+    <div class="time-remaining">Time remaining</div>
+    
+    <div class="timer">
+        <div class="timer-digit">0</div>
+        <div class="timer-digit">0</div>
+        <div class="timer-digit">1</div>
+        <div class="timer-digit">9</div>
+    </div>
+    
+    <div class="timer">
+        <div class="timer-digit">2</div>
+        <div class="timer-digit">4</div>
+        <div class="timer-digit">5</div>
+        <div class="timer-digit">8</div>
+        <div class="timer-digit">2</div>
+    </div>
+    
+    <div class="game-id">20250416100050390</div>
+    
+    <div class="color-options">
+        <div class="color-option green">Green</div>
+        <div class="color-option violet">Violet</div>
+        <div class="color-option red">Red</div>
+    </div>
+    
+    <div class="random">Random</div>
+    
+    <div class="multipliers">
+        <div class="multiplier">X1</div>
+        <div class="multiplier">X5</div>
+        <div class="multiplier">X10</div>
+        <div class="multiplier">X20</div>
+        <div class="multiplier">X50</div>
+        <div class="multiplier">X100</div>
+    </div>
+
+    <script>
+        // Timer functionality would go here
+        // For now it's just static as in the image
+        
+        // Example of adding click handlers
+        document.querySelectorAll('.game-type').forEach(type => {
+            type.addEventListener('click', function() {
+                alert('Selected: ' + this.textContent);
+            });
+        });
+        
+        document.querySelectorAll('.color-option').forEach(color => {
+            color.addEventListener('click', function() {
+                alert('Selected color: ' + this.textContent);
+            });
+        });
+        
+        document.querySelectorAll('.multiplier').forEach(mult => {
+            mult.addEventListener('click', function() {
+                alert('Selected multiplier: ' + this.textContent);
+            });
+        });
+        
+        document.querySelector('.withdraw').addEventListener('click', function() {
+            alert('Withdraw action');
+        });
+        
+        document.querySelector('.deposit').addEventListener('click', function() {
+            alert('Deposit action');
+        });
+    </script>
+</body>
+</html>
