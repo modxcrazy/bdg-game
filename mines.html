@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mines Premium Bot AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Base Styles */
+    :root {
+      --primary-color: #6c5ce7;
+      --secondary-color: #a29bfe;
+      --text-color: #2d3436;
+      --bg-color: #f5f6fa;
+      --card-bg: #ffffff;
+      --success-color: #00b894;
+      --danger-color: #d63031;
+      --warning-color: #fdcb6e;
+      --info-color: #0984e3;
+      --border-radius: 10px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] {
+      --primary-color: #a29bfe;
+      --secondary-color: #6c5ce7;
+      --text-color: #f5f6fa;
+      --bg-color: #2d3436;
+      --card-bg: #1e272e;
+      --success-color: #55efc4;
+      --danger-color: #ff7675;
+      --warning-color: #ffeaa7;
+      --info-color: #74b9ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .theme-toggle button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      background: var(--primary-color);
+      color: white;
+      padding: 15px;
+      text-align: center;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toolbar .stats {
+      display: flex;
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .toolbar .stats span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Loader */
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      display: none;
+    }
+
+    .loader-spinner {
+      text-align: center;
+      color: white;
+    }
+
+    .spinner {
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 5px solid var(--primary-color);
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .status-text {
+      background: var(--card-bg);
+      padding: 10px 15px;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--box-shadow);
+    }
+
+    .status-text i {
+      color: var(--success-color);
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+    }
+
+    /* Stats Panel */
+    .stats-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      box-shadow: var(--box-shadow);
+    }
+
+    .stat-card h3 {
+      font-size: 14px;
+      margin-bottom: 5px;
+      color: var(--secondary-color);
+    }
+
+    .stat-card p {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Mines Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      aspect-ratio: 1/1;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: var(--box-shadow);
+      user-select: none;
+    }
+
+    .cell:hover {
+      transform: scale(1.05);
+    }
+
+    .cell.revealed {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .cell.mine {
+      background: var(--danger-color);
+      color: white;
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    /* Controls */
+    .bet-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .bet-controls label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: var(--secondary-color);
+    }
+
+    .bet-controls input,
+    .bet-controls select {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      border: 1px solid #ddd;
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+
+    /* Buttons */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--box-shadow);
+    }
+
+    button:hover {
+      background: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button i {
+      font-size: 16px;
+    }
+
+    /* Dialog Box */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      display: none;
+    }
+
+    .dialog-box {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .dialog-box h2 {
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+
+    .dialog-box p {
+      margin-bottom: 20px;
+    }
+
+    .dialog-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .dialog-buttons button {
+      flex: 1;
+    }
+
+    .close-btn {
+      background: var(--danger-color);
+    }
+
+    .share-btn {
+      background: var(--info-color);
+    }
+
+    /* History Panel */
+    .history-panel {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      box-shadow: var(--box-shadow);
+      display: none;
+    }
+
+    .history-panel h3 {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary-color);
+    }
+
+    .history-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .history-item.win {
+      color: var(--success-color);
+    }
+
+    .history-item.lose {
+      color: var(--danger-color);
+    }
+
+    /* Join Box */
+    .join-box {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: var(--box-shadow);
+    }
+
+    .join-box h2 {
+      margin-bottom: 10px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .join-box p {
+      margin-bottom: 15px;
+      color: var(--secondary-color);
+    }
+
+    .telegram-btn {
+      background: #0088cc;
+      display: inline-flex;
+      padding: 12px 20px;
+    }
+
+    .telegram-btn:hover {
+      background: #0077b5;
+    }
+
+    .btn-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .stats-panel {
+        grid-template-columns: 1fr;
+      }
+      
+      .bet-controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .buttons {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Dark Mode Toggle -->
+  <div class="theme-toggle">
+    <button id="themeBtn">
+      <i class="fas fa-moon"></i> Dark Mode
+    </button>
+  </div>
+  
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span>• Mines Bot AI •</span>
+    <div class="stats">
+      <span id="winCount"><i class="fas fa-trophy"></i> Wins: 0</span>
+      <span id="lossCount"><i class="fas fa-times-circle"></i> Losses: 0</span>
+      <span id="profitCount"><i class="fas fa-coins"></i> Profit: ₹0</span>
+    </div>
+  </div>
+
+  <!-- Loader Overlay -->
+  <div class="loader-overlay" id="loaderOverlay">
+    <div class="loader-spinner">
+      <div class="spinner"></div>
+      <p>Loading Mines AI...</p>
+    </div>
+  </div>
+  
+  <!-- Main App -->
+  <div class="container">
+    <div class="status-text" id="status">
+      <i class="fas fa-check-circle"></i> Bot Status: Connected to Server
+    </div>
+    
+    <h2 class="subtitle">VIP Premium Signals</h2>
+
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+      <div class="stat-card">
+        <h3>Current Bet</h3>
+        <p id="currentBet">₹0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Potential Win</h3>
+        <p id="potentialWin">₹0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Last Result</h3>
+        <p id="lastResult">-</p>
+      </div>
+    </div>
+
+    <!-- Mines Grid -->
+    <div class="grid" id="grid">
+      <!-- Cells will be generated by JavaScript -->
+    </div>
+
+    <!-- Bet Controls -->
+    <div class="bet-controls">
+      <label for="betAmount">
+        <i class="fas fa-rupee-sign"></i> Bet Amount:
+      </label>
+      <input type="number" id="betAmount" min="10" value="100" step="10">
+      
+      <label for="mineCount">
+        <i class="fas fa-bomb"></i> Mines:
+      </label>
+      <select id="mineCount" class="custom-spinner">
+        <option value="1">1 Mine 💣</option>
+        <option value="2">2 Mines 💣</option>
+        <option value="3">3 Mines 💣</option>
+        <option value="4">4 Mines 💣</option>
+        <option value="5">5 Mines 💣</option>
+        <option value="6">6 Mines 💣</option>
+        <option value="7">7 Mines 💣</option>
+        <option value="8">8 Mines 💣</option>
+        <option value="9">9 Mines 💣</option>
+        <option value="10">10 Mines 💣</option>
+        <option value="11">11 Mines 💣</option>
+        <option value="12">12 Mines 💣</option>
+        <option value="13">13 Mines 💣</option>
+        <option value="14">14 Mines 💣</option>
+        <option value="15">15 Mines 💣</option>
+        <option value="16">16 Mines 💣</option>
+        <option value="17">17 Mines 💣</option>
+        <option value="18">18 Mines 💣</option>
+        <option value="19">19 Mines 💣</option>
+        <option value="20" selected>20 Mines 💣</option>
+      </select>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="buttons">
+      <button id="signalBtn">
+        <i class="fas fa-bolt"></i> Get Signal
+      </button>
+      <button id="autoBtn">
+        <i class="fas fa-robot"></i> Auto Play
+      </button>
+      <button id="statusBtn">
+        <i class="fas fa-sync-alt"></i> Check Status
+      </button>
+      <button id="historyBtn">
+        <i class="fas fa-history"></i> History
+      </button>
+    </div>
+
+    <!-- Dialog Box -->
+    <div class="dialog-overlay" id="dialogOverlay">
+      <div class="dialog-box">
+        <h2 id="dialogTitle">Mines Bot AI Status</h2>
+        <p id="dialogMessage"></p>
+        <div class="dialog-buttons">
+          <button class="close-btn">
+            <i class="fas fa-times"></i> Close
+          </button>
+          <button id="shareBtn" class="share-btn">
+            <i class="fas fa-share-alt"></i> Share
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- History Panel -->
+    <div class="history-panel" id="historyPanel">
+      <h3><i class="fas fa-history"></i> Game History</h3>
+      <div class="history-list" id="historyList">
+        <!-- History items will be added here -->
+      </div>
+    </div>
+    
+    <!-- Join Panel -->
+    <div class="join-box">
+      <h2><i class="fas fa-crown"></i> Welcome to MODX Premium!</h2>
+      <p>Join our exclusive Telegram channel for real-time signals and community support</p>
+      <button id="join-btn" class="telegram-btn">
+        <span class="btn-content">
+          <i class="fab fa-telegram"></i>
+          <span class="btn-text">Join Telegram Channel</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  
+  <!-- Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  
+  <!-- App Script -->
+  <script>
+    // DOM Elements
+    const themeBtn = document.getElementById('themeBtn');
+    const grid = document.getElementById('grid');
+    const mineCountSelect = document.getElementById('mineCount');
+    const betAmountInput = document.getElementById('betAmount');
+    const signalBtn = document.getElementById('signalBtn');
+    const autoBtn = document.getElementById('autoBtn');
+    const statusBtn = document.getElementById('statusBtn');
+    const historyBtn = document.getElementById('historyBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const loaderOverlay = document.getElementById('loaderOverlay');
+    const dialogOverlay = document.getElementById('dialogOverlay');
+    const closeBtn = document.querySelector('.close-btn');
+    const shareBtn = document.getElementById('shareBtn');
+    const dialogTitle = document.getElementById('dialogTitle');
+    const dialogMessage = document.getElementById('dialogMessage');
+    const historyPanel = document.getElementById('historyPanel');
+    const historyList = document.getElementById('historyList');
+    const winCount = document.getElementById('winCount');
+    const lossCount = document.getElementById('lossCount');
+    const profitCount = document.getElementById('profitCount');
+    const currentBet = document.getElementById('currentBet');
+    const potentialWin = document.getElementById('potentialWin');
+    const lastResult = document.getElementById('lastResult');
+
+    // Game Variables
+    let minesCount = 20;
+    let betAmount = 100;
+    let revealedCells = 0;
+    let gameActive = false;
+    let minesPositions = [];
+    let wins = 0;
+    let losses = 0;
+    let profit = 0;
+    let gameHistory = [];
+
+    // Sound Effects
+    const clickSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3');
+    const winSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3');
+    const loseSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3');
+
+    // Initialize the game
+    function initGame() {
+      // Set initial values
+      updateStats();
+      
+      // Generate grid
+      generateGrid();
+      
+      // Event listeners
+      themeBtn.addEventListener('click', toggleTheme);
+      mineCountSelect.addEventListener('change', updateMinesCount);
+      betAmountInput.addEventListener('change', updateBetAmount);
+      signalBtn.addEventListener('click', startGame);
+      autoBtn.addEventListener('click', toggleAutoPlay);
+      statusBtn.addEventListener('click', showStatus);
+      historyBtn.addEventListener('click', toggleHistory);
+      joinBtn.addEventListener('click', joinTelegram);
+      closeBtn.addEventListener('click', closeDialog);
+      shareBtn.addEventListener('click', shareResult);
+      
+      // Show welcome message
+      setTimeout(() => {
+        showDialog('Welcome to Mines AI', 'Get ready to receive premium signals and maximize your wins!');
+      }, 1000);
+    }
+
+    // Generate the mines grid
+    function generateGrid() {
+      grid.innerHTML = '';
+      
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        cell.addEventListener('click', () => revealCell(i));
+        grid.appendChild(cell);
+      }
+    }
+
+    // Start a new game
+    function startGame() {
+      if (gameActive) return;
+      
+      playSound(clickSound);
+      showLoader();
+      
+      // Reset game state
+      revealedCells = 0;
+      gameActive = true;
+      minesPositions = [];
+      
+      // Generate random mines positions
+      const totalCells = 25;
+      while (minesPositions.length < minesCount) {
+        const randomPos = Math.floor(Math.random() * totalCells);
+        if (!minesPositions.includes(randomPos)) {
+          minesPositions.push(randomPos);
+        }
+      }
+      
+      // Update UI
+      currentBet.textContent = `₹${betAmount}`;
+      potentialWin.textContent = `₹${calculatePotentialWin()}`;
+      lastResult.textContent = '-';
+      
+      // Reset grid
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach(cell => {
+        cell.className = 'cell';
+        cell.innerHTML = '';
+      });
+      
+      // Simulate AI processing
+      setTimeout(() => {
+        hideLoader();
+        showDialog('Signal Ready', 'Click on the tiles to reveal gems. Avoid the mines!');
+      }, 1500);
+    }
+
+    // Reveal a cell
+    function revealCell(index) {
+      if (!gameActive) return;
+      
+      const cell = document.querySelector(`.cell[data-index="${index}"]`);
+      if (cell.classList.contains('revealed') || cell.classList.contains('mine')) return;
+      
+      playSound(clickSound);
+      
+      if (minesPositions.includes(index)) {
+        // Mine clicked - game over
+        cell.classList.add('mine');
+        cell.innerHTML = '💣';
+        endGame(false);
+      } else {
+        // Safe cell
+        cell.classList.add('revealed');
+        cell.innerHTML = '💎';
+        revealedCells++;
+        
+        // Check for win
+        if (revealedCells === (25 - minesCount)) {
+          endGame(true);
+        }
+      }
+    }
+
+    // End the game
+    function endGame(isWin) {
+      gameActive = false;
+      
+      // Reveal all mines
+      minesPositions.forEach(pos => {
+        const cell = document.querySelector(`.cell[data-index="${pos}"]`);
+        if (!cell.classList.contains('mine')) {
+          cell.classList.add('mine');
+          cell.innerHTML = '💣';
+        }
+      });
+      
+      // Update stats
+      if (isWin) {
+        const winAmount = calculatePotentialWin();
+        profit += winAmount;
+        wins++;
+        lastResult.textContent = `Win ₹${winAmount}`;
+        playSound(winSound);
+        showConfetti();
+        addToHistory(true, winAmount);
+      } else {
+        profit -= betAmount;
+        losses++;
+        lastResult.textContent = `Loss ₹${betAmount}`;
+        playSound(loseSound);
+        addToHistory(false, betAmount);
+      }
+      
+      updateStats();
+      showDialog(
+        isWin ? 'Congratulations!' : 'Game Over',
+        isWin ? `You won ₹${calculatePotentialWin()}!` : 'You hit a mine. Try again!'
+      );
+    }
+
+    // Calculate potential win
+    function calculatePotentialWin() {
+      const multiplier = (25 / (25 - minesCount)).toFixed(2);
+      return Math.floor(betAmount * multiplier);
+    }
+
+    // Update game stats
+    function updateStats() {
+      winCount.textContent = `Wins: ${wins}`;
+      lossCount.textContent = `Losses: ${losses}`;
+      profitCount.textContent = `Profit: ₹${profit}`;
+    }
+
+    // Add game to history
+    function addToHistory(isWin, amount) {
+      const historyItem = {
+        id: Date.now(),
+        result: isWin ? 'win' : 'lose',
+        amount: amount,
+        timestamp: new Date().toLocaleTimeString(),
+        mines: minesCount
+      };
+      
+      gameHistory.unshift(historyItem);
+      renderHistory();
+    }
+
+    // Render history list
+    function renderHistory() {
+      historyList.innerHTML = '';
+      
+      gameHistory.slice(0, 10).forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = `history-item ${item.result}`;
+        historyItem.innerHTML = `
+          <span>${item.timestamp}</span>
+          <span>${item.result === 'win' ? '₹+' : '₹-'}${item.amount} (${item.mines} mines)</span>
+        `;
+        historyList.appendChild(historyItem);
+      });
+    }
+
+    // Toggle dark/light theme
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        themeBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+      }
+    }
+
+    // Toggle auto play
+    function toggleAutoPlay() {
+      playSound(clickSound);
+      showDialog('Coming Soon', 'Auto play feature will be available in the next update!');
+    }
+
+    // Show status
+    function showStatus() {
+      playSound(clickSound);
+      showDialog('Server Status', 'All systems operational. Ready to generate signals!');
+    }
+
+    // Toggle history panel
+    function toggleHistory() {
+      playSound(clickSound);
+      historyPanel.style.display = historyPanel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Join Telegram
+    function joinTelegram() {
+      playSound(clickSound);
+      window.open('https://t.me/yourchannel', '_blank');
+    }
+
+    // Show dialog
+    function showDialog(title, message) {
+      dialogTitle.textContent = title;
+      dialogMessage.textContent = message;
+      dialogOverlay.style.display = 'flex';
+    }
+
+    // Close dialog
+    function closeDialog() {
+      playSound(clickSound);
+      dialogOverlay.style.display = 'none';
+    }
+
+    // Share result
+    function shareResult() {
+      playSound(clickSound);
+      if (navigator.share) {
+        navigator.share({
+          title: 'Mines AI Result',
+          text: `I just ${lastResult.textContent} playing Mines AI!`,
+          url: window.location.href
+        }).catch(err => {
+          console.log('Error sharing:', err);
+        });
+      } else {
+        showDialog('Share', 'Copy this link to share: ' + window.location.href);
+      }
+    }
+
+    // Show loader
+    function showLoader() {
+      loaderOverlay.style.display = 'flex';
+    }
+
+    // Hide loader
+    function hideLoader() {
+      loaderOverlay.style.display = 'none';
+    }
+
+    // Play sound
+    function playSound(sound) {
+      sound.currentTime = 0;
+      sound.play().catch(e => console.log('Sound play failed:', e));
+    }
+
+    // Show confetti
+    function showConfetti() {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+
+    // Update mines count
+    function updateMinesCount() {
+      minesCount = parseInt(mineCountSelect.value);
+      if (gameActive) {
+        potentialWin.textContent = `₹${calculatePotentialWin()}`;
+      }
+    }
+
+    // Update bet amount
+    function updateBetAmount() {
+      betAmount = parseInt(betAmountInput.value);
+      if (gameActive) {
+        currentBet.textContent = `₹${betAmount}`;
+        potentialWin.textContent = `₹${calculatePotentialWin()}`;
+      }
+    }
+
+    // Initialize the game when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
