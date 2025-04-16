@@ -3,254 +3,506 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Win Go Game</title>
+    <title>WinGo - Professional Betting Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6d28d9;
+            --primary-dark: #5b21b6;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --green: #22c55e;
+            --violet: #8b5cf6;
+            --red: #ef4444;
+            --timer-bg: #1e293b;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         
         body {
-            background-color: #f5f5f5;
-            color: #333;
-            padding: 20px;
+            background-color: #f1f5f9;
+            color: var(--dark);
+            padding: 16px;
             max-width: 500px;
             margin: 0 auto;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 16px 16px 0 0;
         }
         
         .balance {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .balance::before {
+            content: "₹";
+            margin-right: 4px;
+            font-size: 28px;
+        }
+        
+        .wallet-label {
+            font-size: 14px;
+            opacity: 0.9;
             margin-bottom: 20px;
         }
         
         .wallet-actions {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 8px;
         }
         
         .action-btn {
-            background: none;
             border: none;
-            font-size: 16px;
-            font-weight: bold;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .withdraw {
-            color: #333;
+            background-color: white;
+            color: var(--primary);
+        }
+        
+        .withdraw:hover {
+            background-color: #f3f4f6;
         }
         
         .deposit {
-            color: #4CAF50;
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .deposit:hover {
+            background-color: #0d9f6e;
         }
         
         .notice {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 0 20px;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 20px;
         }
         
         .game-types {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .game-types::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        .game-types::-webkit-scrollbar-thumb {
+            background-color: var(--gray);
+            border-radius: 4px;
         }
         
         .game-type {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
             text-align: center;
             cursor: pointer;
-            flex: 1;
-            margin: 0 5px;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
         
-        .divider {
-            border-top: 1px solid #ddd;
-            margin: 20px 0;
+        .game-type.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
         
-        .how-to-play {
-            font-weight: bold;
-            margin-bottom: 10px;
+        .game-type:hover {
+            border-color: var(--primary);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title::before {
+            content: "";
+            display: block;
+            width: 4px;
+            height: 16px;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .timer-container {
+            background-color: var(--timer-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
         }
         
         .time-remaining {
-            margin-bottom: 10px;
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 12px;
         }
         
         .timer {
             display: flex;
             justify-content: center;
-            margin-bottom: 15px;
+            gap: 6px;
+            margin-bottom: 12px;
         }
         
         .timer-digit {
-            background-color: #333;
+            background-color: #334155;
             color: white;
             padding: 10px;
-            margin: 0 2px;
-            border-radius: 5px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 18px;
+            min-width: 36px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timer-separator {
+            color: white;
             font-weight: bold;
+            display: flex;
+            align-items: center;
         }
         
         .game-id {
-            text-align: center;
             font-size: 12px;
-            color: #666;
-            margin-bottom: 20px;
+            color: var(--gray);
+            text-align: center;
         }
         
         .color-options {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
         
         .color-option {
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
+            padding: 14px 0;
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
             text-align: center;
             flex: 1;
-            margin: 0 5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .color-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-option.active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
         
         .green {
-            background-color: #4CAF50;
+            background-color: var(--green);
             color: white;
         }
         
         .violet {
-            background-color: #9C27B0;
+            background-color: var(--violet);
             color: white;
         }
         
         .red {
-            background-color: #F44336;
+            background-color: var(--red);
             color: white;
-        }
-        
-        .random {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 10px;
         }
         
         .multipliers {
             display: flex;
-            justify-content: space-between;
             flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
         }
         
         .multiplier {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 5px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
-            flex: 1;
-            min-width: 50px;
+            font-weight: 600;
+            flex: 1 0 calc(33.333% - 8px);
+            min-width: 0;
+            transition: all 0.2s ease;
+        }
+        
+        .multiplier.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
         
         .multiplier:hover {
-            background-color: #f0f0f0;
+            border-color: var(--primary);
+        }
+        
+        .bet-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .bet-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .random-btn {
+            background-color: #e2e8f0;
+            color: var(--dark);
+        }
+        
+        .random-btn:hover {
+            background-color: #cbd5e1;
+        }
+        
+        .confirm-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .confirm-btn:hover {
+            opacity: 0.9;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
 <body>
-    <div class="balance"># 0.00</div>
-    <div class="wallet-actions">
-        <button class="action-btn withdraw">Withdraw</button>
-        <button class="action-btn deposit">Deposit</button>
-    </div>
-    <div class="notice">Please Fill In The Correct Bank Card Information. The Platform Will Process Withdr</div>
-    
-    <div class="game-types">
-        <div class="game-type">Win Go 30s</div>
-        <div class="game-type">Win Go 1Min</div>
-        <div class="game-type">Win Go 3Min</div>
-        <div class="game-type">Win Go 5Min</div>
-    </div>
-    
-    <div class="divider"></div>
-    
-    <div class="how-to-play">How to play</div>
-    <div class="time-remaining">Time remaining</div>
-    
-    <div class="timer">
-        <div class="timer-digit">0</div>
-        <div class="timer-digit">0</div>
-        <div class="timer-digit">1</div>
-        <div class="timer-digit">9</div>
-    </div>
-    
-    <div class="timer">
-        <div class="timer-digit">2</div>
-        <div class="timer-digit">4</div>
-        <div class="timer-digit">5</div>
-        <div class="timer-digit">8</div>
-        <div class="timer-digit">2</div>
-    </div>
-    
-    <div class="game-id">20250416100050390</div>
-    
-    <div class="color-options">
-        <div class="color-option green">Green</div>
-        <div class="color-option violet">Violet</div>
-        <div class="color-option red">Red</div>
-    </div>
-    
-    <div class="random">Random</div>
-    
-    <div class="multipliers">
-        <div class="multiplier">X1</div>
-        <div class="multiplier">X5</div>
-        <div class="multiplier">X10</div>
-        <div class="multiplier">X20</div>
-        <div class="multiplier">X50</div>
-        <div class="multiplier">X100</div>
+    <div class="container">
+        <div class="header">
+            <div class="balance">0.00</div>
+            <div class="wallet-label">Wallet Balance</div>
+            <div class="wallet-actions">
+                <button class="action-btn withdraw">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15V3M12 15L8 11M12 15L16 11M21 12H17C16.0707 12 15.606 12 15.2196 12.0797C13.6329 12.3916 12.3916 13.6329 12.0797 15.2196C12 15.606 12 16.0707 12 17V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3 6V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Withdraw
+                </button>
+                <button class="action-btn deposit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3V15M12 15L16 11M12 15L8 11M21 12H17C16.0707 12 15.606 12 15.2196 11.9203C13.6329 11.6084 12.3916 10.3671 12.0797 8.78036C12 8.39403 12 7.92929 12 7V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3 6V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H16.2C17.8802 21 18.7202 21 19.362 20.673C19.9265 20.3854 20.3854 19.9265 20.673 19.362C21 18.7202 21 17.8802 21 16.2V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Deposit
+                </button>
+            </div>
+            <div class="notice">Please Fill In The Correct Bank Card Information. The Platform Will Process Withdrawals</div>
+        </div>
+        
+        <div class="content">
+            <div class="game-types">
+                <div class="game-type active">Win Go 30s</div>
+                <div class="game-type">Win Go 1Min</div>
+                <div class="game-type">Win Go 3Min</div>
+                <div class="game-type">Win Go 5Min</div>
+            </div>
+            
+            <div class="section-title">How to play</div>
+            
+            <div class="timer-container">
+                <div class="time-remaining">Time remaining</div>
+                <div class="timer">
+                    <div class="timer-digit">0</div>
+                    <div class="timer-digit">0</div>
+                    <div class="timer-digit pulse">1</div>
+                    <div class="timer-digit">9</div>
+                </div>
+                <div class="timer">
+                    <div class="timer-digit">2</div>
+                    <div class="timer-digit">4</div>
+                    <div class="timer-digit">5</div>
+                    <div class="timer-digit">8</div>
+                    <div class="timer-digit">2</div>
+                </div>
+                <div class="game-id">Game ID: 20250416100050390</div>
+            </div>
+            
+            <div class="color-options">
+                <div class="color-option green active">Green</div>
+                <div class="color-option violet">Violet</div>
+                <div class="color-option red">Red</div>
+            </div>
+            
+            <div class="section-title">Multiplier</div>
+            <div class="multipliers">
+                <div class="multiplier active">X1</div>
+                <div class="multiplier">X5</div>
+                <div class="multiplier">X10</div>
+                <div class="multiplier">X20</div>
+                <div class="multiplier">X50</div>
+                <div class="multiplier">X100</div>
+            </div>
+            
+            <div class="bet-actions">
+                <button class="bet-btn random-btn">Random</button>
+                <button class="bet-btn confirm-btn">Confirm Bet</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Timer functionality would go here
-        // For now it's just static as in the image
-        
-        // Example of adding click handlers
+        // Game type selection
         document.querySelectorAll('.game-type').forEach(type => {
             type.addEventListener('click', function() {
-                alert('Selected: ' + this.textContent);
+                document.querySelectorAll('.game-type').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // Here you would update the game mode
             });
         });
         
+        // Color selection
         document.querySelectorAll('.color-option').forEach(color => {
             color.addEventListener('click', function() {
-                alert('Selected color: ' + this.textContent);
+                document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                // Here you would update the selected color
             });
         });
         
+        // Multiplier selection
         document.querySelectorAll('.multiplier').forEach(mult => {
             mult.addEventListener('click', function() {
-                alert('Selected multiplier: ' + this.textContent);
+                document.querySelectorAll('.multiplier').forEach(m => m.classList.remove('active'));
+                this.classList.add('active');
+                // Here you would update the selected multiplier
             });
         });
         
+        // Withdraw button
         document.querySelector('.withdraw').addEventListener('click', function() {
-            alert('Withdraw action');
+            alert('Withdraw action would open a withdrawal form');
         });
         
+        // Deposit button
         document.querySelector('.deposit').addEventListener('click', function() {
-            alert('Deposit action');
+            alert('Deposit action would open a deposit form');
         });
+        
+        // Random button
+        document.querySelector('.random-btn').addEventListener('click', function() {
+            const colors = document.querySelectorAll('.color-option');
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            colors.forEach(c => c.classList.remove('active'));
+            randomColor.classList.add('active');
+            
+            const multipliers = document.querySelectorAll('.multiplier');
+            const randomMultiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
+            multipliers.forEach(m => m.classList.remove('active'));
+            randomMultiplier.classList.add('active');
+        });
+        
+        // Confirm bet button
+        document.querySelector('.confirm-btn').addEventListener('click', function() {
+            const selectedColor = document.querySelector('.color-option.active').textContent;
+            const selectedMultiplier = document.querySelector('.multiplier.active').textContent;
+            alert(`Bet confirmed!\nColor: ${selectedColor}\nMultiplier: ${selectedMultiplier}`);
+        });
+        
+        // Countdown timer simulation (would be connected to real game timer in production)
+        function updateTimer() {
+            // This is just a simulation - in a real app you'd connect to the game server's timer
+            const digits = document.querySelectorAll('.timer-digit');
+            let currentValue = parseInt(digits[2].textContent);
+            
+            if (currentValue > 0) {
+                digits[2].textContent = currentValue - 1;
+                digits[2].classList.add('pulse');
+            } else {
+                // Reset timer (simulating new round)
+                digits[2].textContent = '9';
+                digits[2].classList.remove('pulse');
+                
+                // Flash animation for round change
+                document.querySelector('.timer-container').style.animation = 'none';
+                setTimeout(() => {
+                    document.querySelector('.timer-container').style.animation = 'flash 0.5s';
+                }, 10);
+            }
+        }
+        
+        // Update timer every second
+        setInterval(updateTimer, 1000);
     </script>
 </body>
 </html>
