@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProSMM - Professional SMM Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Auth Forms -->
+    <div class="auth-forms">
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input id="login-email" type="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input id="login-password" type="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
+        </form>
+        
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form" style="display: none;">
+            <h2>Register</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input id="register-username" type="text" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input id="register-email" type="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input id="register-password" type="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+            <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+        </form>
+    </div>
+
+    <!-- Dashboard (hidden by default) -->
+    <div class="dashboard user-content" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h2>ProSMM</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Services</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-tasks"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-wallet"></i>
+                        <span>Balance: $<span id="user-balance">0.00</span></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="user-area">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User">
+                    <span id="username-display">Guest</span>
+                    <button id="deposit-btn" class="btn btn-primary">Deposit</button>
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Total Balance</h3>
+                    <div class="value">$<span id="total-balance">0.00</span></div>
+                    <div class="change up">
+                        <i class="fas fa-arrow-up"></i> <span id="balance-change">0%</span> from last month
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>Orders Today</h3>
+                    <div class="value"><span id="orders-today">0</span></div>
+                    <div class="change up">
+                        <i class="fas fa-arrow-up"></i> <span id="orders-change">0%</span> from yesterday
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>Completed Orders</h3>
+                    <div class="value"><span id="completed-orders">0</span></div>
+                    <div class="change up">
+                        <i class="fas fa-arrow-up"></i> <span id="completed-change">0%</span> from last month
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending Orders</h3>
+                    <div class="value"><span id="pending-orders">0</span></div>
+                    <div class="change down">
+                        <i class="fas fa-arrow-down"></i> <span id="pending-change">0%</span> from yesterday
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Services Section -->
+            <div class="services">
+                <div class="section-header">
+                    <h2>Popular Services</h2>
+                    <a href="#">View All</a>
+                </div>
+                
+                <div class="service-categories">
+                    <div class="category active">All</div>
+                    <div class="category">Instagram</div>
+                    <div class="category">YouTube</div>
+                    <div class="category">Facebook</div>
+                    <div class="category">Twitter</div>
+                </div>
+                
+                <div class="service-list" id="service-list">
+                    <!-- Services will be loaded here dynamically -->
+                </div>
+            </div>
+            
+            <!-- Orders Section -->
+            <div class="orders">
+                <div class="section-header">
+                    <h2>Recent Orders</h2>
+                    <a href="#">View All</a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Service</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table">
+                            <!-- Orders will be loaded here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Deposit Funds</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="deposit-form">
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input id="deposit-amount" type="number" min="5" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Card Details</label>
+                        <div id="card-element"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Deposit</button>
+                    <button type="button" class="btn btn-outline close-modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Place Order</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="order-form">
+                    <div class="form-group">
+                        <label>Service</label>
+                        <input id="order-service" type="text" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input id="order-amount" type="number" min="100" required>
+                        <small id="amount-range"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Link</label>
+                        <input id="order-link" type="url" placeholder="https://..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Price: $<span id="order-price">0.00</span></label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Place Order</button>
+                    <button type="button" class="btn btn-outline close-modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
