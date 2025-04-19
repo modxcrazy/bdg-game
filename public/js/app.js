@@ -5,22 +5,6 @@ let stripe = null;
 let elements = null;
 let cardElement = null;
 
-// DOM Elements
-const loginForm = document.getElementById('login-form');
-const registerForm = document.getElementById('register-form');
-const showRegister = document.getElementById('show-register');
-const showLogin = document.getElementById('show-login');
-const logoutBtn = document.getElementById('logout-btn');
-const userBalanceElement = document.getElementById('user-balance');
-const depositBtn = document.getElementById('deposit-btn');
-const depositModal = document.querySelector('#deposit-modal');
-const depositForm = document.getElementById('deposit-form');
-const closeModalButtons = document.querySelectorAll('.close-modal');
-const orderModal = document.querySelector('#order-modal');
-const orderForm = document.getElementById('order-form');
-const serviceList = document.getElementById('service-list');
-const ordersTable = document.getElementById('orders-table');
-
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Stripe
@@ -239,7 +223,7 @@ function renderServices(services) {
             <div class="service-actions">
                 <button class="btn btn-outline">Details</button>
                 <button class="btn btn-primary" 
-                    data-service-id="${service._id}"
+                    data-service-id="${service.id}"
                     data-service-name="${service.name}"
                     data-service-min="${service.min}"
                     data-service-max="${service.max}"
@@ -309,7 +293,7 @@ async function handleOrder(e) {
         
         if (response.ok) {
             const order = await response.json();
-            alert(`Order #${order._id.toString().substring(0, 6)} placed successfully!`);
+            alert(`Order #${order.id.substring(0, 6)} placed successfully!`);
             orderModal.style.display = 'none';
             loadOrders();
             loadStats();
@@ -353,8 +337,8 @@ function renderOrders(orders) {
     
     ordersTable.innerHTML = orders.map(order => `
         <tr>
-            <td>#ORD-${order._id.toString().substring(0, 6)}</td>
-            <td>${order.serviceId.name}</td>
+            <td>#ORD-${order.id.substring(0, 6)}</td>
+            <td>${order.service?.name || 'N/A'}</td>
             <td>${order.amount}</td>
             <td>$${order.price.toFixed(2)}</td>
             <td><span class="status ${order.status}">${order.status}</span></td>
@@ -381,7 +365,7 @@ async function handleDeposit(e) {
     e.preventDefault();
     const amount = parseFloat(document.getElementById('deposit-amount').value);
     
-    if (isNaN(amount) {
+    if (isNaN(amount)) {
         alert('Please enter a valid amount');
         return;
     }
