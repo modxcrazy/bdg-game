@@ -1,11 +1,24 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const cors = require('cors');
 const path = require('path');
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
+// Initialize Firebase
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: process.env.FIREBASE_DATABASE_URL
+});
+
+const db = admin.database();
+const usersRef = db.ref('users');
+const servicesRef = db.ref('services');
+const ordersRef = db.ref('orders');
+const transactionsRef = db.ref('transactions');
 
 const app = express();
 
@@ -14,58 +27,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
-
-// Models
-const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    balance: { type: Number, default: 0 },
-    createdAt: { type: Date, default: Date.now }
-});
-
-const ServiceSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    category: { type: String, required: true },
-    min: { type: Number, required: true },
-    max: { type: Number, required: true },
-    rate: { type: Number, required: true },
-    speed: { type: String, required: true },
-    description: { type: String }
-});
-
-const OrderSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    serviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
-    amount: { type: Number, required: true },
-    price: { type: Number, required: true },
-    status: { type: String, enum: ['pending', 'processing', 'completed', 'failed'], default: 'pending' },
-    createdAt: { type: Date, default: Date.now }
-});
-
-const TransactionSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    amount: { type: Number, required: true },
-    type: { type: String, enum: ['deposit', 'purchase', 'refund'], required: true },
-    status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
-    paymentMethod: { type: String },
-    stripePaymentId: { type: String },
-    createdAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', UserSchema);
-const Service = mongoose.model('Service', ServiceSchema);
-const Order = mongoose.model('Order', OrderSchema);
-const Transaction = mongoose.model('Transaction', TransactionSchema);
-
-// Middleware
+// Authentication Middleware
 const authenticate = (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) return res.status(401).send('Access denied');
@@ -80,118 +42,222 @@ const authenticate = (req, res, next) => {
 };
 
 // Routes
+
+// User Registration
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         
-        if (await User.findOne({ email })) {
+        // Check if user exists
+        const snapshot = await usersRef.orderByChild('email').equalTo(email).once('value');
+        if (snapshot.exists()) {
             return res.status(400).send('User already exists');
         }
 
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ username, email, password: hashedPassword });
-        await user.save();
+        const newUserRef = usersRef.push();
+        
+        await newUserRef.set({
+            username,
+            email,
+            password: hashedPassword,
+            balance: 0,
+            createdAt: admin.database.ServerValue.TIMESTAMP
+        });
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.status(201).send({ token, user: { id: user._id, username, email, balance: user.balance } });
+        // Generate JWT
+        const token = jwt.sign({ id: newUserRef.key }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        res.status(201).send({ 
+            token, 
+            user: { 
+                id: newUserRef.key, 
+                username, 
+                email, 
+                balance: 0 
+            } 
+        });
     } catch (err) {
         res.status(500).send('Error registering user');
     }
 });
 
+// User Login
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).send('Invalid credentials');
+        
+        // Find user
+        const snapshot = await usersRef.orderByChild('email').equalTo(email).once('value');
+        if (!snapshot.exists()) {
+            return res.status(400).send('Invalid credentials');
+        }
+        
+        const users = snapshot.val();
+        const userId = Object.keys(users)[0];
+        const user = users[userId];
 
+        // Check password
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).send('Invalid credentials');
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.send({ token, user: { id: user._id, username: user.username, email: user.email, balance: user.balance } });
+        // Generate JWT
+        const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        res.send({ 
+            token, 
+            user: { 
+                id: userId, 
+                username: user.username, 
+                email: user.email, 
+                balance: user.balance 
+            } 
+        });
     } catch (err) {
         res.status(500).send('Error logging in');
     }
 });
 
+// Get current user
 app.get('/api/me', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.send(user);
+        const snapshot = await usersRef.child(req.user.id).once('value');
+        const user = snapshot.val();
+        if (!user) return res.status(404).send('User not found');
+        
+        // Remove password before sending
+        const { password, ...userData } = user;
+        res.send({ id: req.user.id, ...userData });
     } catch (err) {
         res.status(500).send('Error fetching user');
     }
 });
 
+// Get all services
 app.get('/api/services', async (req, res) => {
     try {
         const { category } = req.query;
-        const query = category ? { category } : {};
-        const services = await Service.find(query);
+        const snapshot = await servicesRef.once('value');
+        let services = snapshot.val() || {};
+        
+        services = Object.keys(services).map(key => ({
+            id: key,
+            ...services[key]
+        }));
+        
+        if (category) {
+            services = services.filter(service => service.category === category);
+        }
+        
         res.send(services);
     } catch (err) {
         res.status(500).send('Error fetching services');
     }
 });
 
+// Create order
 app.post('/api/orders', authenticate, async (req, res) => {
     try {
         const { serviceId, amount } = req.body;
-        const service = await Service.findById(serviceId);
+        
+        // Get service
+        const serviceSnapshot = await servicesRef.child(serviceId).once('value');
+        const service = serviceSnapshot.val();
+        
         if (!service) return res.status(404).send('Service not found');
         
+        // Validate amount
         if (amount < service.min || amount > service.max) {
             return res.status(400).send(`Amount must be between ${service.min} and ${service.max}`);
         }
         
+        // Calculate price
         const price = (amount * service.rate / 1000).toFixed(2);
-        const user = await User.findById(req.user.id);
+        
+        // Check user balance
+        const userSnapshot = await usersRef.child(req.user.id).once('value');
+        const user = userSnapshot.val();
+        
         if (user.balance < price) {
             return res.status(400).send('Insufficient balance');
         }
         
-        user.balance -= parseFloat(price);
-        await user.save();
+        // Deduct balance
+        const newBalance = user.balance - parseFloat(price);
+        await usersRef.child(req.user.id).update({ balance: newBalance });
         
-        const order = new Order({
+        // Create order
+        const newOrderRef = ordersRef.push();
+        await newOrderRef.set({
             userId: req.user.id,
             serviceId,
             amount,
             price,
-            status: 'pending'
+            status: 'pending',
+            createdAt: admin.database.ServerValue.TIMESTAMP
         });
-        await order.save();
         
-        const transaction = new Transaction({
+        // Create transaction
+        const newTransactionRef = transactionsRef.push();
+        await newTransactionRef.set({
             userId: req.user.id,
             amount: price,
             type: 'purchase',
             status: 'completed',
-            paymentMethod: 'balance'
+            paymentMethod: 'balance',
+            createdAt: admin.database.ServerValue.TIMESTAMP
         });
-        await transaction.save();
         
-        res.status(201).send(order);
+        res.status(201).send({ 
+            id: newOrderRef.key,
+            userId: req.user.id,
+            serviceId,
+            amount,
+            price,
+            status: 'pending',
+            createdAt: Date.now()
+        });
     } catch (err) {
         res.status(500).send('Error creating order');
     }
 });
 
+// Get user orders
 app.get('/api/orders', authenticate, async (req, res) => {
     try {
-        const orders = await Order.find({ userId: req.user.id })
-            .populate('serviceId', 'name category')
-            .sort({ createdAt: -1 });
-        res.send(orders);
+        const snapshot = await ordersRef.orderByChild('userId').equalTo(req.user.id).once('value');
+        let orders = snapshot.val() || {};
+        
+        orders = Object.keys(orders).map(key => ({
+            id: key,
+            ...orders[key]
+        }));
+        
+        // Get service details for each order
+        const ordersWithServices = await Promise.all(orders.map(async order => {
+            const serviceSnapshot = await servicesRef.child(order.serviceId).once('value');
+            const service = serviceSnapshot.val();
+            return {
+                ...order,
+                service: {
+                    name: service?.name,
+                    category: service?.category
+                }
+            };
+        }));
+        
+        res.send(ordersWithServices);
     } catch (err) {
         res.status(500).send('Error fetching orders');
     }
 });
 
+// Create payment intent (Stripe)
 app.post('/api/create-payment-intent', authenticate, async (req, res) => {
     try {
         const { amount } = req.body;
+        
         if (amount < 5) return res.status(400).send('Minimum deposit is $5');
         
         const paymentIntent = await stripe.paymentIntents.create({
@@ -200,12 +266,15 @@ app.post('/api/create-payment-intent', authenticate, async (req, res) => {
             metadata: { userId: req.user.id.toString() }
         });
         
-        res.send({ clientSecret: paymentIntent.client_secret });
+        res.send({
+            clientSecret: paymentIntent.client_secret
+        });
     } catch (err) {
         res.status(500).send('Error creating payment intent');
     }
 });
 
+// Webhook for Stripe payments
 app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
@@ -218,22 +287,29 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, re
 
     if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
-        const user = await User.findById(paymentIntent.metadata.userId);
+        const userId = paymentIntent.metadata.userId;
+        
+        // Find user
+        const userSnapshot = await usersRef.child(userId).once('value');
+        const user = userSnapshot.val();
         if (!user) return;
         
+        // Add to balance
         const amount = paymentIntent.amount / 100;
-        user.balance += amount;
-        await user.save();
+        const newBalance = user.balance + amount;
+        await usersRef.child(userId).update({ balance: newBalance });
         
-        const transaction = new Transaction({
-            userId: user._id,
+        // Create transaction
+        const newTransactionRef = transactionsRef.push();
+        await newTransactionRef.set({
+            userId,
             amount,
             type: 'deposit',
             status: 'completed',
             paymentMethod: 'stripe',
-            stripePaymentId: paymentIntent.id
+            stripePaymentId: paymentIntent.id,
+            createdAt: admin.database.ServerValue.TIMESTAMP
         });
-        await transaction.save();
     }
 
     res.json({ received: true });
